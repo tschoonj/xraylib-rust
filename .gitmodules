@@ -1,0 +1,3 @@
+[submodule "xraylib-src/xraylib"]
+	path = xraylib-src/xraylib
+	url = https://github.com/tschoonj/xraylib

@@ -1,0 +1,17 @@
+[package]
+name = "testcrate"
+version = "1.0.0"
+authors = ["Tom Schoonjans <Tom.Schoonjans@me.com>"]
+
+[dependencies]
+libc = "0.2"
+
+[[bin]]
+name = 'package'
+required-features = ['package']
+
+[features]
+package = ['tar', 'flate2']
+
+[build-dependencies]
+xraylib-src = { path = ".." }

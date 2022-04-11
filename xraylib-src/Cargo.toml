@@ -1,0 +1,13 @@
+[package]
+name = "xraylib-src"
+version = "1.0.0"
+authors = ["Tom Schoonjans <Tom.Schoonjans@me.com>"]
+license = "BSD"
+# readme = "README.md"
+repository = "https://github.com/tschoonj/xraylib-rust"
+description = """
+xraylib source code, ready for vendoring into Rust bindings
+"""
+
+[dependencies]
+cc = "1.0"
