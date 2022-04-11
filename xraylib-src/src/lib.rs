@@ -60,9 +60,11 @@ impl Build {
         if build_dir.exists() {
             fs::remove_dir_all(&build_dir).unwrap();
         }
+        fs::create_dir_all(&build_dir).unwrap();
         if install_dir.exists() {
             fs::remove_dir_all(&install_dir).unwrap();
         }
+        fs::create_dir_all(&install_dir).unwrap();
 
 
         let meson_program =
@@ -70,21 +72,21 @@ impl Build {
         let mut configure = Command::new(meson_program);
         configure.arg(&format!("--prefix={}", install_dir.display()));
         configure.arg("-Ddefault_library=static");
-	configure.arg("-Dpython-bindings=disabled");
-	configure.arg("-Dpython-numpy-bindings=disabled");
-	configure.arg(source_dir());
+        configure.arg("-Dpython-bindings=disabled");
+        configure.arg("-Dpython-numpy-bindings=disabled");
+        configure.arg(source_dir());
 
-	let mut cc = cc::Build::new();
-	cc.target(target).host(host).warnings(false).opt_level(2);
-	let compiler = cc.get_compiler();
-	configure.env("CC", compiler.path());
+        let mut cc = cc::Build::new();
+        cc.target(target).host(host).warnings(false).opt_level(2);
+        let compiler = cc.get_compiler();
+        configure.env("CC", compiler.path());
 
         configure.current_dir(&build_dir);
         self.run_command(configure, "configuring meson build");
 
         let ninja_program =
             env::var("NINJA").unwrap_or("ninja".to_string());
-	let mut build = Command::new(ninja_program);
+        let mut build = Command::new(ninja_program);
         build.arg("install").current_dir(&build_dir);
         self.run_command(build, "building and installing xraylib");
 
