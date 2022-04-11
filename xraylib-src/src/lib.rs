@@ -23,7 +23,6 @@ pub struct Artifacts {
     include_dir: PathBuf,
     lib_dir: PathBuf,
     lib: String,
-    target: String,
 }
 
 impl Build {
@@ -66,9 +65,7 @@ impl Build {
         }
         fs::create_dir_all(&install_dir).unwrap();
 
-
-        let meson_program =
-            env::var("MESON").unwrap_or("meson".to_string());
+        let meson_program = env::var("MESON").unwrap_or("meson".to_string());
         let mut configure = Command::new(meson_program);
         configure.arg(&format!("--prefix={}", install_dir.display()));
         configure.arg("-Ddefault_library=static");
@@ -84,8 +81,7 @@ impl Build {
         configure.current_dir(&build_dir);
         self.run_command(configure, "configuring meson build");
 
-        let ninja_program =
-            env::var("NINJA").unwrap_or("ninja".to_string());
+        let ninja_program = env::var("NINJA").unwrap_or("ninja".to_string());
         let mut build = Command::new(ninja_program);
         build.arg("install").current_dir(&build_dir);
         self.run_command(build, "building and installing xraylib");
@@ -100,7 +96,6 @@ impl Build {
             lib_dir: install_dir.join("lib"),
             include_dir: install_dir.join("include"),
             lib: lib,
-            target: target.to_string(),
         }
     }
 
@@ -139,7 +134,7 @@ impl Artifacts {
 
     pub fn print_cargo_metadata(&self) {
         println!("cargo:rustc-link-search=native={}", self.lib_dir.display());
-	println!("cargo:rustc-link-lib=static={}", self.lib);
+        println!("cargo:rustc-link-lib=static={}", self.lib);
         println!("cargo:include={}", self.include_dir.display());
         println!("cargo:lib={}", self.lib_dir.display());
     }
