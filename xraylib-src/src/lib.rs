@@ -74,6 +74,7 @@ impl Build {
         let meson_program = env::var("MESON").unwrap_or_else(|_| "meson".to_string());
         let mut configure = Command::new(meson_program);
         configure.arg(&format!("--prefix={}", install_dir.display()));
+        configure.arg("--libdir=lib");
         configure.arg("-Ddefault_library=static");
         configure.arg("-Dpython-bindings=disabled");
         configure.arg("-Dpython-numpy-bindings=disabled");
