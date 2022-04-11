@@ -25,6 +25,12 @@ pub struct Artifacts {
     lib: String,
 }
 
+impl Default for Build {
+    fn default() -> Self {
+        Build::new()
+    }
+}
+
 impl Build {
     pub fn new() -> Build {
         Build {
@@ -65,7 +71,7 @@ impl Build {
         }
         fs::create_dir_all(&install_dir).unwrap();
 
-        let meson_program = env::var("MESON").unwrap_or("meson".to_string());
+        let meson_program = env::var("MESON").unwrap_or_else(|_| "meson".to_string());
         let mut configure = Command::new(meson_program);
         configure.arg(&format!("--prefix={}", install_dir.display()));
         configure.arg("-Ddefault_library=static");
@@ -81,7 +87,7 @@ impl Build {
         configure.current_dir(&build_dir);
         self.run_command(configure, "configuring meson build");
 
-        let ninja_program = env::var("NINJA").unwrap_or("ninja".to_string());
+        let ninja_program = env::var("NINJA").unwrap_or_else(|_| "ninja".to_string());
         let mut build = Command::new(ninja_program);
         build.arg("install").current_dir(&build_dir);
         self.run_command(build, "building and installing xraylib");
@@ -95,7 +101,7 @@ impl Build {
         Artifacts {
             lib_dir: install_dir.join("lib"),
             include_dir: install_dir.join("include"),
-            lib: lib,
+            lib,
         }
     }
 
