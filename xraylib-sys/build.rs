@@ -65,6 +65,8 @@ fn main() {
         .header_contents("wrapper.h", "#include <xraylib.h>")
         .default_macro_constant_type(bindgen::MacroTypeVariation::Signed)
         .blocklist_file("stddef.h")
+        .blocklist_item("PI")
+        .blocklist_item("TWOPI")
         // Tell cargo to invalidate the built crate whenever any of the
         // included header files changed.
         .parse_callbacks(Box::new(bindgen::CargoCallbacks));
