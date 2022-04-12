@@ -8,6 +8,7 @@ repository = "https://github.com/tschoonj/xraylib-rust"
 description = """
 xraylib source code, ready for vendoring into Rust bindings
 """
+edition = '2021'
 
 [dependencies]
 cc = "1.0"
