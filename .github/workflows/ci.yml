@@ -10,66 +10,33 @@ name: CI
 
 jobs:
   check:
-    name: Check
+    name: Full check with apt libxrl ${{ matrix.use_apt_libxrl }} 
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        use_apt_libxrl:
+          - "true"
+          - "false"
+        include:
+          - use_apt_libxrl: "true"
+            extra_flags: ""
+          - use_apt_libxrl: "false"
+            extra_flags: "--features vendored"
+          
     steps:
       - uses: actions/setup-python@v3
         with:
           python-version: '3.x'
 
-      - run: pip install meson ninja
-
-      - name: Checkout sources
-        uses: actions/checkout@v3
-        with:
-          submodules: true
-
-      - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-
-      - name: Run cargo check
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
-
-  test:
-    name: Test Suite
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/setup-python@v3
-        with:
-          python-version: '3.x'
-
-      - run: pip install meson ninja
-
-      - name: Checkout sources
-        uses: actions/checkout@v3
-        with:
-          submodules: true
-
-      - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-
-      - name: Run cargo test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-
-  lints:
-    name: Lints
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/setup-python@v3
-        with:
-          python-version: '3.x'
+      - name: Install libxrl-dev
+        if: matrix.use_apt_libxrl == 'true'
+        run: |
+          set -ex
+          curl http://xmi-apt.tomschoonjans.eu/xmi.packages.key | sudo apt-key add -
+          sudo add-apt-repository --yes "deb [arch=amd64] http://xmi-apt.tomschoonjans.eu/ubuntu focal stable"
+          sudo apt-get --yes --force-yes update
+          sudo apt-get --yes --force-yes install libxrl11-dev
+          set +ex
 
       - run: pip install meson ninja
 
@@ -86,6 +53,18 @@ jobs:
           override: true
           components: rustfmt, clippy
 
+      - name: Run cargo check
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: ${{ matrix.extra_flags }}
+      
+      - name: Run cargo test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: ${{ matrix.extra_flags }}
+
       - name: Run cargo fmt
         uses: actions-rs/cargo@v1
         with:
@@ -96,4 +75,4 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: -- -D warnings
+          args: ${{ matrix.extra_flags }} -- -D warnings 
