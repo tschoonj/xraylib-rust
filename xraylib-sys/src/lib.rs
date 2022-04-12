@@ -6,7 +6,6 @@
 
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -22,11 +21,11 @@ mod tests {
 
     #[test]
     fn test_calls_with_excepion_handling_no_error() {
-	    let mut error = ptr::null_mut();
+        let mut error = ptr::null_mut();
         unsafe {
             let aw = AtomicWeight(26, &mut error);
             assert!(error.is_null());
-	
+
             println!("{}", aw);
             assert_eq!(aw, 55.85);
         }
@@ -34,12 +33,12 @@ mod tests {
 
     #[test]
     fn test_calls_with_excepion_handling_with_error() {
-	    let mut error = ptr::null_mut();
+        let mut error = ptr::null_mut();
         unsafe {
             let aw = AtomicWeight(-3, &mut error);
             assert!(!error.is_null());
             assert_eq!((*error).code, xrl_error_code_XRL_ERROR_INVALID_ARGUMENT);
-	
+
             println!("{}", aw);
             assert_eq!(aw, 0.0);
             xrl_clear_error(&mut error);
