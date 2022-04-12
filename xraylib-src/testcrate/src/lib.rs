@@ -12,7 +12,7 @@ mod tests {
     use std::ptr;
 
     #[test]
-    fn test_version_works() {
+    fn test_basic_call() {
         unsafe {
             println!("{}", AtomicWeight(26, ptr::null_mut()));
             assert_eq!(AtomicWeight(26, ptr::null_mut()), 55.85);
