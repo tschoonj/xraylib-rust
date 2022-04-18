@@ -47,19 +47,41 @@ impl From<*mut ffi::xrl_error> for Error {
     }
 }
 
-pub fn AtomicWeight(Z: i32) -> Result<f64> {
-    let mut xrl_error = ptr::null_mut();
-    unsafe {
-        let aw = ffi::AtomicWeight(Z, &mut xrl_error);
-        if xrl_error.is_null() {
-            Ok(aw)
-        } else {
-            let error: Error = xrl_error.into();
-            xrl_error_free(xrl_error);
-            Err(error)
+// pub fn AtomicWeight(Z: i32) -> Result<f64> {
+//     let mut xrl_error = ptr::null_mut();
+//     unsafe {
+//         let aw = ffi::AtomicWeight(Z, &mut xrl_error);
+//         if xrl_error.is_null() {
+//             Ok(aw)
+//         } else {
+//             let error: Error = xrl_error.into();
+//             xrl_error_free(xrl_error);
+//             Err(error)
+//         }
+//     }
+// }
+
+macro_rules! wrap_xraylib_function {
+    ($result:ty, $function:ident, $($args:ident)+, $($types:ty)+) => {
+        pub fn $function($($args : $types,)*) -> Result<$result> {
+            let mut xrl_error = ptr::null_mut();
+            unsafe {
+                let rv = ffi::$function($($args,)* &mut xrl_error);
+                if xrl_error.is_null() {
+                    Ok(rv)
+                } else {
+                    let error: Error = xrl_error.into();
+                    xrl_error_free(xrl_error);
+                    Err(error)
+                }
+            }
         }
-    }
+    };
 }
+
+wrap_xraylib_function!(f64, AtomicWeight, Z, i32);
+wrap_xraylib_function!(f64, ComptonProfile, Z pz, i32 f64);
+wrap_xraylib_function!(f64, ComptonProfile_Partial, Z shell pz, i32 i32 f64);
 
 #[cfg(test)]
 mod tests {
