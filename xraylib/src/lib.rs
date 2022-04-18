@@ -1,4 +1,5 @@
 #![allow(non_snake_case)]
+#![allow(clippy::not_unsafe_ptr_arg_deref)]
 
 use std::ffi::{CStr, CString};
 use std::ptr;
@@ -38,11 +39,10 @@ impl From<*mut ffi::xrl_error> for Error {
         unsafe {
             let message: CString = CStr::from_ptr((*error).message).into();
             let message = message.to_str().unwrap().to_string();
-            let rv = Error {
+            Error {
                 code: (*error).code,
                 message,
-            };
-            rv
+            }
         }
     }
 }
