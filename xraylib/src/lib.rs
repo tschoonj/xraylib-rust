@@ -1,10 +1,16 @@
 #![allow(non_snake_case)]
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
+#![feature(trace_macros)]
+
+trace_macros!(true);
 
 use std::ffi::{CStr, CString};
+use std::os::raw;
 use std::ptr;
 
-use ffi::xrl_error_free;
+// re-export all symbols from xraylib-sys,
+// to gain access to shell, line, etc constants
+pub use ffi::*;
 
 #[derive(Debug)]
 pub struct Error {
@@ -62,10 +68,12 @@ impl From<*mut ffi::xrl_error> for Error {
 // }
 
 macro_rules! wrap_xraylib_function {
-    ($result:ty, $function:ident, $($args:ident)+, $($types:ty)+) => {
+    ($result:ty, $function:ident, $($args:ident)+, $($types:ty)+, $process_input1:stmt, $process_input2:stmt) => {
         pub fn $function($($args : $types,)*) -> Result<$result> {
             let mut xrl_error = ptr::null_mut();
             unsafe {
+                $process_input1
+                $process_input2
                 let rv = ffi::$function($($args,)* &mut xrl_error);
                 if xrl_error.is_null() {
                     Ok(rv)
@@ -79,9 +87,11 @@ macro_rules! wrap_xraylib_function {
     };
 }
 
-wrap_xraylib_function!(f64, AtomicWeight, Z, i32);
-wrap_xraylib_function!(f64, ComptonProfile, Z pz, i32 f64);
-wrap_xraylib_function!(f64, ComptonProfile_Partial, Z shell pz, i32 i32 f64);
+wrap_xraylib_function!(f64, AtomicWeight, Z, i32, {}, {});
+wrap_xraylib_function!(f64, ComptonProfile, Z pz, i32 f64, {}, {});
+wrap_xraylib_function!(f64, ComptonProfile_Partial, Z shell pz, i32 i32 f64, {}, {});
+wrap_xraylib_function!(i32, SymbolToAtomicNumber, symbol, &str, let c_str = CString::new(symbol).unwrap(), let symbol = c_str.as_ptr() as *const raw::c_char);
+wrap_xraylib_function!(f64, CS_Total_CP, compound E, &str f64, let c_str = CString::new(compound).unwrap(), let compound = c_str.as_ptr() as *const raw::c_char);
 
 #[cfg(test)]
 mod tests {
