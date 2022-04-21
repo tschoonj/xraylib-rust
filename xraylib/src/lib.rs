@@ -33,6 +33,14 @@ pub struct compoundData {
     pub molarMass: f64,
 }
 
+pub struct compoundDataNIST {
+    pub name: String,
+    pub nElements: i32,
+    pub Elements: Vec<i32>,
+    pub massFractions: Vec<f64>,
+    pub density: f64,
+}
+
 impl From<*mut ffi::compoundData> for compoundData {
     fn from(cd: *mut ffi::compoundData) -> Self {
         if cd.is_null() {
@@ -47,6 +55,28 @@ impl From<*mut ffi::compoundData> for compoundData {
                     .to_vec(),
                 nAtoms: slice::from_raw_parts((*cd).nAtoms, (*cd).nElements as usize).to_vec(),
                 molarMass: (*cd).molarMass,
+            }
+        }
+    }
+}
+
+impl From<*mut ffi::compoundDataNIST> for compoundDataNIST {
+    fn from(cdn: *mut ffi::compoundDataNIST) -> Self {
+        if cdn.is_null() {
+            panic!("Cannot create compoundDataNIST from null pointer!");
+        }
+        unsafe {
+            compoundDataNIST {
+                name: CStr::from_ptr((*cdn).name).to_string_lossy().into_owned(),
+                nElements: (*cdn).nElements,
+                Elements: slice::from_raw_parts((*cdn).Elements, (*cdn).nElements as usize)
+                    .to_vec(),
+                massFractions: slice::from_raw_parts(
+                    (*cdn).massFractions,
+                    (*cdn).nElements as usize,
+                )
+                .to_vec(),
+                density: (*cdn).density,
             }
         }
     }
@@ -135,6 +165,14 @@ fn process_output_compound_data(ptr: *mut ffi::compoundData) -> compoundData {
     }
 }
 
+fn process_output_compound_data_nist(ptr: *mut ffi::compoundDataNIST) -> compoundDataNIST {
+    unsafe {
+        let rv = ptr.into();
+        ffi::FreeCompoundDataNIST(ptr);
+        rv
+    }
+}
+
 wrap_xraylib_function!(rv, f64, AtomicWeight, Z, i32, {}, {}, {}, {});
 wrap_xraylib_function!(rv, f64, ComptonProfile, Z pz, i32 f64, {}, {}, {}, {});
 wrap_xraylib_function!(rv, f64, ComptonProfile_Partial, Z shell pz, i32 i32 f64, {}, {}, {}, {});
@@ -142,6 +180,40 @@ wrap_xraylib_function!(rv, i32, SymbolToAtomicNumber, symbol, &str, let c_str = 
 wrap_xraylib_function!(rv, f64, CS_Total_CP, compound E, &str f64, let c_str = CString::new(compound).unwrap(), let compound = c_str.as_ptr() as *const raw::c_char, {}, {});
 wrap_xraylib_function!(rv, String, AtomicNumberToSymbol, Z, i32, {}, {}, let rv = process_output_c_string(rv), {});
 wrap_xraylib_function!(rv, compoundData, CompoundParser, compound, &str, let c_str = CString::new(compound).unwrap(), let compound = c_str.as_ptr() as *const raw::c_char, let rv = process_output_compound_data(rv), {});
+wrap_xraylib_function!(rv, compoundDataNIST, GetCompoundDataNISTByName, compound, &str, let c_str = CString::new(compound).unwrap(), let compound = c_str.as_ptr() as *const raw::c_char, let rv = process_output_compound_data_nist(rv), {});
+wrap_xraylib_function!(rv, compoundDataNIST, GetCompoundDataNISTByIndex, index, i32, {}, {}, let rv = process_output_compound_data_nist(rv), {});
+
+pub fn GetCompoundDataNISTList() -> Result<Vec<String>> {
+    unsafe {
+        let mut xrl_error = ptr::null_mut();
+        let mut nCompounds = 0;
+
+        let raw_list = ffi::GetCompoundDataNISTList(&mut nCompounds, &mut xrl_error);
+        let raw_list_vec = slice::from_raw_parts(raw_list, nCompounds as usize).to_vec();
+        let rv: Vec<String> = raw_list_vec
+            .into_iter()
+            .map(process_output_c_string)
+            .collect();
+        ffi::xrlFree(raw_list as *mut raw::c_void);
+        Ok(rv)
+    }
+}
+
+pub fn GetRadioNuclideDataList() -> Result<Vec<String>> {
+    unsafe {
+        let mut xrl_error = ptr::null_mut();
+        let mut nRadioNuclides = 0;
+
+        let raw_list = ffi::GetRadioNuclideDataList(&mut nRadioNuclides, &mut xrl_error);
+        let raw_list_vec = slice::from_raw_parts(raw_list, nRadioNuclides as usize).to_vec();
+        let rv: Vec<String> = raw_list_vec
+            .into_iter()
+            .map(process_output_c_string)
+            .collect();
+        ffi::xrlFree(raw_list as *mut raw::c_void);
+        Ok(rv)
+    }
+}
 
 #[cfg(test)]
 mod tests {
