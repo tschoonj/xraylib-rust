@@ -1,5 +1,6 @@
 #![allow(non_snake_case)]
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
+#![allow(non_camel_case_types)]
 #![feature(trace_macros)]
 
 trace_macros!(true);
@@ -7,6 +8,7 @@ trace_macros!(true);
 use std::ffi::{CStr, CString};
 use std::os::raw;
 use std::ptr;
+use std::slice;
 
 // re-export all symbols from xraylib-sys,
 // to gain access to shell, line, etc constants
@@ -21,6 +23,34 @@ pub struct Error {
 impl std::error::Error for Error {}
 
 pub type Result<T> = std::result::Result<T, Error>;
+
+pub struct compoundData {
+    pub nElements: i32,
+    pub nAtomsAll: f64,
+    pub Elements: Vec<i32>,
+    pub massFractions: Vec<f64>,
+    pub nAtoms: Vec<f64>,
+    pub molarMass: f64,
+}
+
+impl From<*mut ffi::compoundData> for compoundData {
+    fn from(cd: *mut ffi::compoundData) -> Self {
+        if cd.is_null() {
+            panic!("Cannot create compoundData from null pointer!");
+        }
+        unsafe {
+            compoundData {
+                nElements: (*cd).nElements,
+                nAtomsAll: (*cd).nAtomsAll,
+                Elements: slice::from_raw_parts((*cd).Elements, (*cd).nElements as usize).to_vec(),
+                massFractions: slice::from_raw_parts((*cd).massFractions, (*cd).nElements as usize)
+                    .to_vec(),
+                nAtoms: slice::from_raw_parts((*cd).nAtoms, (*cd).nElements as usize).to_vec(),
+                molarMass: (*cd).molarMass,
+            }
+        }
+    }
+}
 
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -89,10 +119,18 @@ macro_rules! wrap_xraylib_function {
     };
 }
 
-fn process_output_c_string(ptr: *const raw::c_char) -> String {
+fn process_output_c_string(ptr: *mut raw::c_char) -> String {
     unsafe {
         let rv = CStr::from_ptr(ptr).to_string_lossy().into_owned();
         ffi::xrlFree(ptr as *mut raw::c_void);
+        rv
+    }
+}
+
+fn process_output_compound_data(ptr: *mut ffi::compoundData) -> compoundData {
+    unsafe {
+        let rv = ptr.into();
+        ffi::FreeCompoundData(ptr);
         rv
     }
 }
@@ -101,8 +139,9 @@ wrap_xraylib_function!(rv, f64, AtomicWeight, Z, i32, {}, {}, {}, {});
 wrap_xraylib_function!(rv, f64, ComptonProfile, Z pz, i32 f64, {}, {}, {}, {});
 wrap_xraylib_function!(rv, f64, ComptonProfile_Partial, Z shell pz, i32 i32 f64, {}, {}, {}, {});
 wrap_xraylib_function!(rv, i32, SymbolToAtomicNumber, symbol, &str, let c_str = CString::new(symbol).unwrap(), let symbol = c_str.as_ptr() as *const raw::c_char, {}, {});
-wrap_xraylib_function!(rv, f64, CS_Total_CP, compound E, &str f64, let c_str = CString::new(compound).unwrap(), let compound = c_str.as_ptr() as *const raw::c_char, println!("{}", rv), {});
+wrap_xraylib_function!(rv, f64, CS_Total_CP, compound E, &str f64, let c_str = CString::new(compound).unwrap(), let compound = c_str.as_ptr() as *const raw::c_char, {}, {});
 wrap_xraylib_function!(rv, String, AtomicNumberToSymbol, Z, i32, {}, {}, let rv = process_output_c_string(rv), {});
+wrap_xraylib_function!(rv, compoundData, CompoundParser, compound, &str, let c_str = CString::new(compound).unwrap(), let compound = c_str.as_ptr() as *const raw::c_char, let rv = process_output_compound_data(rv), {});
 
 #[cfg(test)]
 mod tests {
