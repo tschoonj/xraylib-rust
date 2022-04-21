@@ -27,7 +27,8 @@ fn check_nist_compound(cdn: xraylib::compoundDataNIST) {
 
 #[test]
 fn test_GetCompoundDataNISTByIndex_5() {
-    let cdn = xraylib::GetCompoundDataNISTByIndex(5).unwrap();
+    let cdn =
+        xraylib::GetCompoundDataNISTByIndex(xraylib::NIST_COMPOUND_AIR_DRY_NEAR_SEA_LEVEL).unwrap();
     check_nist_compound(cdn);
 }
 

@@ -41,6 +41,20 @@ pub struct compoundDataNIST {
     pub density: f64,
 }
 
+pub struct radioNuclideData {
+    pub name: String,
+    pub Z: i32,
+    pub A: i32,
+    pub N: i32,
+    pub Z_xray: i32,
+    pub nXrays: i32,
+    pub XrayLines: Vec<i32>,
+    pub XrayIntensities: Vec<f64>,
+    pub nGammas: i32,
+    pub GammaEnergies: Vec<f64>,
+    pub GammaIntensities: Vec<f64>,
+}
+
 impl From<*mut ffi::compoundData> for compoundData {
     fn from(cd: *mut ffi::compoundData) -> Self {
         if cd.is_null() {
@@ -77,6 +91,38 @@ impl From<*mut ffi::compoundDataNIST> for compoundDataNIST {
                 )
                 .to_vec(),
                 density: (*cdn).density,
+            }
+        }
+    }
+}
+
+impl From<*mut ffi::radioNuclideData> for radioNuclideData {
+    fn from(rnd: *mut ffi::radioNuclideData) -> Self {
+        if rnd.is_null() {
+            panic!("Cannot create radioNuclideData from null pointer!");
+        }
+        unsafe {
+            radioNuclideData {
+                name: CStr::from_ptr((*rnd).name).to_string_lossy().into_owned(),
+                Z: (*rnd).Z,
+                A: (*rnd).A,
+                N: (*rnd).N,
+                Z_xray: (*rnd).Z_xray,
+                nXrays: (*rnd).nXrays,
+                XrayLines: slice::from_raw_parts((*rnd).XrayLines, (*rnd).nXrays as usize).to_vec(),
+                XrayIntensities: slice::from_raw_parts(
+                    (*rnd).XrayIntensities,
+                    (*rnd).nXrays as usize,
+                )
+                .to_vec(),
+                nGammas: (*rnd).nGammas,
+                GammaEnergies: slice::from_raw_parts((*rnd).GammaEnergies, (*rnd).nGammas as usize)
+                    .to_vec(),
+                GammaIntensities: slice::from_raw_parts(
+                    (*rnd).GammaIntensities,
+                    (*rnd).nGammas as usize,
+                )
+                .to_vec(),
             }
         }
     }
@@ -165,6 +211,14 @@ fn process_output_compound_data(ptr: *mut ffi::compoundData) -> compoundData {
     }
 }
 
+fn process_output_radio_nuclide_data(ptr: *mut ffi::radioNuclideData) -> radioNuclideData {
+    unsafe {
+        let rv = ptr.into();
+        ffi::FreeRadioNuclideData(ptr);
+        rv
+    }
+}
+
 fn process_output_compound_data_nist(ptr: *mut ffi::compoundDataNIST) -> compoundDataNIST {
     unsafe {
         let rv = ptr.into();
@@ -182,6 +236,8 @@ wrap_xraylib_function!(rv, String, AtomicNumberToSymbol, Z, i32, {}, {}, let rv 
 wrap_xraylib_function!(rv, compoundData, CompoundParser, compound, &str, let c_str = CString::new(compound).unwrap(), let compound = c_str.as_ptr() as *const raw::c_char, let rv = process_output_compound_data(rv), {});
 wrap_xraylib_function!(rv, compoundDataNIST, GetCompoundDataNISTByName, compound, &str, let c_str = CString::new(compound).unwrap(), let compound = c_str.as_ptr() as *const raw::c_char, let rv = process_output_compound_data_nist(rv), {});
 wrap_xraylib_function!(rv, compoundDataNIST, GetCompoundDataNISTByIndex, index, i32, {}, {}, let rv = process_output_compound_data_nist(rv), {});
+wrap_xraylib_function!(rv, radioNuclideData, GetRadioNuclideDataByName, radionuclide, &str, let c_str = CString::new(radionuclide).unwrap(), let radionuclide = c_str.as_ptr() as *const raw::c_char, let rv = process_output_radio_nuclide_data(rv), {});
+wrap_xraylib_function!(rv, radioNuclideData, GetRadioNuclideDataByIndex, index, i32, {}, {}, let rv = process_output_radio_nuclide_data(rv), {});
 
 pub fn GetCompoundDataNISTList() -> Result<Vec<String>> {
     unsafe {
