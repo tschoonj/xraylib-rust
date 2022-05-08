@@ -11,7 +11,8 @@ xraylib bindings
 edition = '2021'
 
 [features]
-vendored = ['ffi/vendored']
+default = ["vendored"]
+vendored = ["ffi/vendored"]
 
 [dependencies]
 ffi = { package = "xraylib-sys", version = "1.0.0", path = "../xraylib-sys" }
