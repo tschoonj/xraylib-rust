@@ -184,7 +184,7 @@ impl From<&Crystal_Struct> for *mut ffi::Crystal_Struct {
             (*cs_raw).n_atom = cs.n_atom;
             let cs_atom_size = (cs.n_atom as usize) * std::mem::size_of::<ffi::Crystal_Atom>();
             (*cs_raw).atom = ffi::xrl_malloc(cs_atom_size as u64) as *mut ffi::Crystal_Atom;
-            ptr::copy_nonoverlapping(cs.atom.as_ptr(), (*cs_raw).atom, cs_atom_size);
+            ptr::copy_nonoverlapping(cs.atom.as_ptr(), (*cs_raw).atom, cs.n_atom as usize);
 
             cs_raw
         }
