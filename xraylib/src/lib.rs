@@ -67,7 +67,6 @@ pub struct Crystal_Struct {
     pub volume: f64,
     pub n_atom: i32,
     pub atom: Vec<Crystal_Atom>,
-
 }
 
 impl From<*mut ffi::compoundData> for compoundData {
@@ -159,7 +158,7 @@ impl From<*mut ffi::Crystal_Struct> for Crystal_Struct {
                 gamma: (*cs).gamma,
                 volume: (*cs).volume,
                 n_atom: (*cs).n_atom,
-                atom: slice::from_raw_parts((*cs).atom, (*cs).n_atom as usize).to_vec()
+                atom: slice::from_raw_parts((*cs).atom, (*cs).n_atom as usize).to_vec(),
             }
         }
     }
@@ -170,7 +169,8 @@ impl From<&Crystal_Struct> for *mut ffi::Crystal_Struct {
         unsafe {
             // by using xraylib's memory allocation functions,
             // we can use Crystal_Free on the returned pointer
-            let cs_raw = ffi::xrl_malloc(std::mem::size_of::<ffi::Crystal_Struct>() as u64) as *mut ffi::Crystal_Struct;
+            let cs_raw = ffi::xrl_malloc(std::mem::size_of::<ffi::Crystal_Struct>() as u64)
+                as *mut ffi::Crystal_Struct;
             // println!("Dumping from {:#?}", cs);
             let c_str = CString::new(cs.name.clone()).unwrap();
             (*cs_raw).name = ffi::xrl_strdup(c_str.as_ptr());
@@ -310,8 +310,6 @@ wrap_xraylib_function!(rv, compoundDataNIST, GetCompoundDataNISTByIndex, index, 
 wrap_xraylib_function!(rv, radioNuclideData, GetRadioNuclideDataByName, radionuclide, &str, let c_str = CString::new(radionuclide).unwrap(), let radionuclide = c_str.as_ptr() as *const raw::c_char, let rv = process_output_radio_nuclide_data(rv), {});
 wrap_xraylib_function!(rv, radioNuclideData, GetRadioNuclideDataByIndex, index, i32, {}, {}, let rv = process_output_radio_nuclide_data(rv), {});
 wrap_xraylib_function!(rv, f64, Bragg_angle, cs energy i_miller j_miller k_miller, &Crystal_Struct f64 i32 i32 i32, let cs = cs.into(), {}, {}, ffi::Crystal_Free(cs));
-// wrap_xraylib_function!(rv, f64, Bragg_angle, cs energy i_miller j_miller k_miller, &Crystal_Struct f64 i32 i32 i32, let cs = cs.into(), {}, {}, {});
-
 
 pub fn GetCompoundDataNISTList() -> Result<Vec<String>> {
     unsafe {
@@ -348,9 +346,10 @@ pub fn GetRadioNuclideDataList() -> Result<Vec<String>> {
 pub fn Crystal_GetCrystalsList() -> Result<Vec<String>> {
     unsafe {
         let mut xrl_error = ptr::null_mut();
-        let mut nCrystals= 0;
+        let mut nCrystals = 0;
 
-        let raw_list = ffi::Crystal_GetCrystalsList(ptr::null_mut(), &mut nCrystals, &mut xrl_error);
+        let raw_list =
+            ffi::Crystal_GetCrystalsList(ptr::null_mut(), &mut nCrystals, &mut xrl_error);
         let raw_list_vec = slice::from_raw_parts(raw_list, nCrystals as usize).to_vec();
         let rv: Vec<String> = raw_list_vec
             .into_iter()
@@ -366,7 +365,7 @@ pub fn Crystal_GetCrystal(material: &str) -> Result<Crystal_Struct> {
         let mut xrl_error = ptr::null_mut();
         let c_str = CString::new(material).unwrap();
         let material = c_str.as_ptr() as *const raw::c_char;
-        let raw_crystal = ffi::Crystal_GetCrystal(material, ptr::null_mut(), &mut xrl_error); 
+        let raw_crystal = ffi::Crystal_GetCrystal(material, ptr::null_mut(), &mut xrl_error);
         if xrl_error.is_null() {
             let rv = process_output_crystal_struct(raw_crystal);
             Ok(rv)
@@ -375,7 +374,7 @@ pub fn Crystal_GetCrystal(material: &str) -> Result<Crystal_Struct> {
             xrl_error_free(xrl_error);
             Err(error)
         }
-    }    
+    }
 }
 
 #[cfg(test)]
