@@ -2,13 +2,10 @@
 name = "testcrate"
 version = "1.0.0"
 authors = ["Tom Schoonjans <Tom.Schoonjans@me.com>"]
+edition = '2021'
 
 [dependencies]
 libc = "0.2"
-
-#[[bin]]
-#name = 'package'
-#required-features = ['package']
 
 [build-dependencies]
 xraylib-src = { path = ".." }

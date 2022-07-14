@@ -1,14 +1,18 @@
 [package]
-name = "xraylib-src"
+name = "xraylib"
 version = "1.0.0"
 authors = ["Tom Schoonjans <Tom.Schoonjans@me.com>"]
 license = "BSD"
 # readme = "README.md"
 repository = "https://github.com/tschoonj/xraylib-rust"
 description = """
-xraylib source code, ready for vendoring into Rust bindings
+xraylib bindings
 """
 edition = '2021'
 
+[features]
+vendored = ["ffi/vendored"]
+
 [dependencies]
-cc = "1.0"
+ffi = { package = "xraylib-sys", version = "1.0.0", path = "../xraylib-sys" }
+

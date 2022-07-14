@@ -2,4 +2,6 @@
 members = [
     "xraylib-src",
     "xraylib-src/testcrate",
+    "xraylib-sys",
+    "xraylib",
 ]

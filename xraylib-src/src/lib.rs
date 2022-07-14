@@ -23,7 +23,12 @@ pub struct Artifacts {
     include_dir: PathBuf,
     lib_dir: PathBuf,
     lib: String,
-    target: String,
+}
+
+impl Default for Build {
+    fn default() -> Self {
+        Build::new()
+    }
 }
 
 impl Build {
@@ -66,11 +71,10 @@ impl Build {
         }
         fs::create_dir_all(&install_dir).unwrap();
 
-
-        let meson_program =
-            env::var("MESON").unwrap_or("meson".to_string());
+        let meson_program = env::var("MESON").unwrap_or_else(|_| "meson".to_string());
         let mut configure = Command::new(meson_program);
         configure.arg(&format!("--prefix={}", install_dir.display()));
+        configure.arg("--libdir=lib");
         configure.arg("-Ddefault_library=static");
         configure.arg("-Dpython-bindings=disabled");
         configure.arg("-Dpython-numpy-bindings=disabled");
@@ -84,12 +88,12 @@ impl Build {
         configure.current_dir(&build_dir);
         self.run_command(configure, "configuring meson build");
 
-        let ninja_program =
-            env::var("NINJA").unwrap_or("ninja".to_string());
+        let ninja_program = env::var("NINJA").unwrap_or_else(|_| "ninja".to_string());
         let mut build = Command::new(ninja_program);
         build.arg("install").current_dir(&build_dir);
         self.run_command(build, "building and installing xraylib");
 
+        // TODO: verify on Windows, not sure this is actually correct
         let lib = if target.contains("msvc") {
             "libxrl".to_string()
         } else {
@@ -97,10 +101,9 @@ impl Build {
         };
 
         Artifacts {
+            include_dir: install_dir.join("include").join("xraylib"),
             lib_dir: install_dir.join("lib"),
-            include_dir: install_dir.join("include"),
-            lib: lib,
-            target: target.to_string(),
+            lib,
         }
     }
 
@@ -139,7 +142,7 @@ impl Artifacts {
 
     pub fn print_cargo_metadata(&self) {
         println!("cargo:rustc-link-search=native={}", self.lib_dir.display());
-	println!("cargo:rustc-link-lib=static={}", self.lib);
+        println!("cargo:rustc-link-lib=static={}", self.lib);
         println!("cargo:include={}", self.include_dir.display());
         println!("cargo:lib={}", self.lib_dir.display());
     }
