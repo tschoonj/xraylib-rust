@@ -18,7 +18,7 @@ vendored = ['xraylib-src']
 libc = "0.2"
 
 [build-dependencies]
-bindgen = "0.59.2"
+bindgen = "0.60.1"
 cc = "1.0"
 xraylib-src = { version = "1.0.0", optional = true, path = "../xraylib-src" }
 pkg-config = "0.3.9"
