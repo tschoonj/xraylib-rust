@@ -83,7 +83,8 @@ impl Build {
         let mut cc = cc::Build::new();
         cc.target(target).host(host).warnings(false).opt_level(2);
         let compiler = cc.get_compiler();
-        configure.env("CC", compiler.path());
+        configure.env("CC", compiler.cc_env());
+        configure.env("CFLAGS", compiler.cflags_env());
 
         configure.current_dir(&build_dir);
         self.run_command(configure, "configuring meson build");
