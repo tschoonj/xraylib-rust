@@ -94,12 +94,7 @@ impl Build {
         build.arg("install").current_dir(&build_dir);
         self.run_command(build, "building and installing xraylib");
 
-        // TODO: verify on Windows, not sure this is actually correct
-        let lib = if target.contains("msvc") {
-            "libxrl".to_string()
-        } else {
-            "xrl".to_string()
-        };
+        let lib = "xrl".to_string();
 
         Artifacts {
             include_dir: install_dir.join("include").join("xraylib"),
