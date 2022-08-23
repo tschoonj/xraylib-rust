@@ -101,7 +101,7 @@ jobs:
           components: rustfmt, clippy
 
       - name: Remove git's link.exe
-        run: del C:\Program Files\Git\usr\bin\link.EXE
+        run: del "C:\Program Files\Git\usr\bin\link.EXE"
 
       - name: Run cargo check
         uses: actions-rs/cargo@v1
