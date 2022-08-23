@@ -9,8 +9,8 @@ on:
 name: CI
 
 jobs:
-  check:
-    name: Full check with apt libxrl ${{ matrix.use_apt_libxrl }} 
+  linux:
+    name: Full Linux check with apt libxrl ${{ matrix.use_apt_libxrl }} 
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -76,3 +76,50 @@ jobs:
         with:
           command: clippy
           args: ${{ matrix.extra_flags }} -- -D warnings 
+
+  windows:
+    name: Full Windows check with vendored libxrl
+    runs-on: windows-latest
+    steps:
+      - uses: actions/setup-python@v3
+        with:
+          python-version: '3.x'
+
+      - run: pip install meson ninja
+
+      - name: Checkout sources
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+
+      - name: Run cargo check
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: "--features vendored"
+      
+      - name: Run cargo test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: "--features vendored"
+
+      - name: Run cargo fmt
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+      - name: Run cargo clippy
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: "--features vendored -- -D warnings"
