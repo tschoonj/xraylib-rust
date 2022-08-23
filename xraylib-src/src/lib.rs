@@ -101,7 +101,8 @@ impl Build {
             std::fs::rename(
                 install_dir.join("lib").join("libxrl.a"),
                 install_dir.join("lib").join("xrl.lib"),
-            ).unwrap();
+            )
+            .unwrap();
         }
 
         Artifacts {
