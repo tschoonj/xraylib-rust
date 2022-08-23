@@ -92,6 +92,9 @@ jobs:
         with:
           submodules: true
 
+      - name: Activate msvc dev environment
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
         with:
