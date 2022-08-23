@@ -83,7 +83,8 @@ impl Build {
         let mut cc = cc::Build::new();
         cc.target(target).host(host).warnings(false).opt_level(2);
         let compiler = cc.get_compiler();
-        configure.env("CC", compiler.path());
+        configure.env("CC", compiler.cc_env());
+        configure.env("CFLAGS", compiler.cflags_env());
 
         configure.current_dir(&build_dir);
         self.run_command(configure, "configuring meson build");
@@ -93,12 +94,16 @@ impl Build {
         build.arg("install").current_dir(&build_dir);
         self.run_command(build, "building and installing xraylib");
 
-        // TODO: verify on Windows, not sure this is actually correct
-        let lib = if target.contains("msvc") {
-            "libxrl".to_string()
-        } else {
-            "xrl".to_string()
-        };
+        let lib = "xrl".to_string();
+
+        // rename static library to expected name on Windows
+        if compiler.is_like_msvc() {
+            std::fs::rename(
+                install_dir.join("lib").join("libxrl.a"),
+                install_dir.join("lib").join("xrl.lib"),
+            )
+            .unwrap();
+        }
 
         Artifacts {
             include_dir: install_dir.join("include").join("xraylib"),
