@@ -96,6 +96,14 @@ impl Build {
 
         let lib = "xrl".to_string();
 
+        // rename static library to expected name on Windows
+        if compiler.is_like_msvc() {
+            std::fs::rename(
+                install_dir.join("lib").join("libxrl.a"),
+                install_dir.join("lib").join("xrl.lib"),
+            ).unwrap();
+        }
+
         Artifacts {
             include_dir: install_dir.join("include").join("xraylib"),
             lib_dir: install_dir.join("lib"),
