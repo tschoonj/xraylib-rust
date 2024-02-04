@@ -77,6 +77,7 @@ impl Build {
         configure.arg("--libdir=lib");
         configure.arg("-Ddefault_library=static");
         configure.arg("-Dpython-bindings=disabled");
+        configure.arg("-Dfortran-bindings=disabled");
         configure.arg("-Dpython-numpy-bindings=disabled");
         configure.arg(source_dir());
 
