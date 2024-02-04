@@ -17,6 +17,7 @@ jobs:
         os:
           - ubuntu-latest
           - windows-latest
+          - macos-latest
         xraylib_source:
           - vendored
           - installed
@@ -43,6 +44,10 @@ jobs:
           sudo apt-get --yes --force-yes update
           sudo apt-get --yes --force-yes install libxrl11-dev
           set +ex
+
+      - name: Install xraylib on macOS
+        if: matrix.xraylib_source == 'installed' && matrix.os == 'macos-latest'
+        run: brew install tschoonj/tap/xraylib
 
       - run: pip install meson ninja
 
