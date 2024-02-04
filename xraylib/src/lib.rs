@@ -169,7 +169,7 @@ impl From<&Crystal_Struct> for *mut ffi::Crystal_Struct {
         unsafe {
             // by using xraylib's memory allocation functions,
             // we can use Crystal_Free on the returned pointer
-            let cs_raw = ffi::xrl_malloc(std::mem::size_of::<ffi::Crystal_Struct>() as u64)
+            let cs_raw = ffi::xrl_malloc(std::mem::size_of::<ffi::Crystal_Struct>())
                 as *mut ffi::Crystal_Struct;
             // println!("Dumping from {:#?}", cs);
             let c_str = CString::new(cs.name.clone()).unwrap();
@@ -183,7 +183,7 @@ impl From<&Crystal_Struct> for *mut ffi::Crystal_Struct {
             (*cs_raw).volume = cs.volume;
             (*cs_raw).n_atom = cs.n_atom;
             let cs_atom_size = (cs.n_atom as usize) * std::mem::size_of::<ffi::Crystal_Atom>();
-            (*cs_raw).atom = ffi::xrl_malloc(cs_atom_size as u64) as *mut ffi::Crystal_Atom;
+            (*cs_raw).atom = ffi::xrl_malloc(cs_atom_size) as *mut ffi::Crystal_Atom;
             ptr::copy_nonoverlapping(cs.atom.as_ptr(), (*cs_raw).atom, cs.n_atom as usize);
 
             cs_raw
