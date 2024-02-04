@@ -9,27 +9,34 @@ on:
 name: CI
 
 jobs:
-  linux:
-    name: Full Linux check with apt libxrl ${{ matrix.use_apt_libxrl }} 
-    runs-on: ubuntu-latest
+  multi-arch:
+    name: ${{ matrix.os }} check with ${{ matrix.xraylib_source}} xraylib source code
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        use_apt_libxrl:
-          - "true"
-          - "false"
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+        xraylib_source:
+          - vendored
+          - installed
         include:
-          - use_apt_libxrl: "true"
+          - xraylib_source: installed
             extra_flags: ""
-          - use_apt_libxrl: "false"
+          - xraylib_source: vendored
             extra_flags: "--features vendored"
+        exclude:
+          - os: windows-latest
+            xraylib_source: installed
           
     steps:
-      - uses: actions/setup-python@v3
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
-      - name: Install libxrl-dev
-        if: matrix.use_apt_libxrl == 'true'
+      - name: Install libxrl-dev on Linux
+        if: matrix.xraylib_source == 'installed' && matrix.os == 'ubuntu-latest'
         run: |
           set -ex
           curl http://xmi-apt.tomschoonjans.eu/xmi.packages.key | sudo apt-key add -
@@ -38,91 +45,35 @@ jobs:
           sudo apt-get --yes --force-yes install libxrl11-dev
           set +ex
 
-      - run: pip install meson ninja
-
-      - name: Checkout sources
-        uses: actions/checkout@v3
-        with:
-          submodules: true
-
-      - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-          components: rustfmt, clippy
-
-      - name: Run cargo check
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: ${{ matrix.extra_flags }}
-      
-      - name: Run cargo test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: ${{ matrix.extra_flags }}
-
-      - name: Run cargo fmt
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
-
-      - name: Run cargo clippy
-        uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: ${{ matrix.extra_flags }} -- -D warnings 
-
-  windows:
-    name: Full Windows check with vendored libxrl
-    runs-on: windows-latest
-    steps:
-      - uses: actions/setup-python@v3
-        with:
-          python-version: '3.x'
+      - name: Install xraylib on macOS
+        if: matrix.xraylib_source == 'installed' && matrix.os == 'macos-latest'
+        run: brew install tschoonj/tap/xraylib
 
       - run: pip install meson ninja
 
       - name: Checkout sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: true
 
       - name: Activate msvc dev environment
         uses: ilammy/msvc-dev-cmd@v1
+        if: matrix.os == 'windows-latest'
 
-      - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@stable
+        name: Install stable toolchain
         with:
-          profile: minimal
-          toolchain: stable
-          override: true
           components: rustfmt, clippy
 
       - name: Run cargo check
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: "--features vendored"
+        run: cargo check ${{ matrix.extra_flags }}
       
       - name: Run cargo test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: "--features vendored"
+        run: cargo test ${{ matrix.extra_flags }}
 
       - name: Run cargo fmt
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
+        run: cargo fmt --all -- --check
 
       - name: Run cargo clippy
-        uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: "--features vendored -- -D warnings"
+        run: cargo clippy ${{ matrix.extra_flags }} -- -D warnings 
+

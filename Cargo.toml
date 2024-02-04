@@ -5,3 +5,4 @@ members = [
     "xraylib-sys",
     "xraylib",
 ]
+resolver = "2"
